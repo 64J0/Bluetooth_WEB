@@ -8,56 +8,182 @@
         <meta http-equiv="Content-Language" content="pt-br">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
+        <style>
+
+            #terminal div {
+                color: gray;
+            }
+
+            #terminal div.out {
+                color: red;
+            }
+
+            #terminal div.in {
+                color: blue;
+            }
+
+        </style>
+
     </head>
 
     <body>
 
-        <h1 id="demo">Hello world Bluetooth!</h1>
+        <h1 id="demo">Comunicação Bluetooth</h1>
 
-        <button id="myBtn">Clique aqui</button>
+        <button id="myBtn1">Conectar!</button>
+
+        <button id="myBtn2">Desconectar!</button>
+
+        <div  id="terminal">
+            <div>Conexão com o dispositivo...</div>
+            <div class="out">Mensagem saindo</div>
+            <div class="in">Mensagem chegando</div>
+        </div>
+
+        <form id="send_form">
+            <input id="input" type="text">
+            <button type="submit">Enviar</button>
+        </form>
 
     </body>
 
     <script>
 
-        let botao = document.getElementById('myBtn');
+        let connectButton = document.getElementById('myBtn1');
+        let disconnectButton = document.getElementById('myBtn2');
+        let terminalContainer = document.getElementById('terminal');
+        let sendForm = document.getElementById('send_form');
+        let inputField = document.getElementById('input');
         
-        function mostrar_dados(dispositivo) {
-            console.log(dispositivo.name);
+        let caracteristica;
 
-            let para = document.createElement("p");
-            let node = document.createTextNode("Dispositivo conectado!");
+        connectButton.addEventListener('click', function() {
 
-            para.appendChild(node);
-            para.setAttribute("class", "mensagem");
-            document.body.appendChild(para);
-        }
-
-        botao.addEventListener('click', function() {
-
-            navigator.bluetooth.requestDevice({
-                acceptAllDevices: true,
-                optionalServices: ['battery_service']
-            }).then(
-                device => { 
-                    
-                    mostrar_dados(device);
-
-                    return device.gatt.connect();
-                }
-            ).then(server => {
-                return server.getPrimaryService('battery_service');
-            }).then (service => {
-                return service.getCharacteristic('battery_level');
-            }).then (characteristic => {
-                return characteristic.readValue();
-            }).then (value => {
-                console.log('Battery percentage is ' + value.getUint8(0));
-            }).catch(error => {
-                console.log("Error encountered: " + error);
-            });
+            connect();
 
         });
+
+        disconnectButton.addEventListener('click', function() {
+
+            disconnect();
+
+        });
+
+        sendForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent from sending
+            send(inputField.value); // Send text field contents
+            inputField.value = ''; // Zero text field
+            inputField.focus();
+        });
+
+        let deviceCache = null;
+
+        function connect() {
+            return (deviceCache ? Promise.resolve(deviceCache) : 
+                requestBluetoothDevice()).
+                then(device => connectDeviceAndCacheCharacteristic(device)).
+                then(characteristic => startNotifications(characteristic)).
+                catch(error => log(error));
+        }
+
+        function requestBluetoothDevice() {
+            log('Requesting bluetooth device...');
+
+            return navigator.bluetooth.requestDevice({
+                filters: [{
+                    name: ['Vib_UART']
+                }],
+                optionalServices: [
+                    '0000180f-0000-1000-8000-00805f9b34fb',
+                    '00001800-0000-1000-8000-00805f9b34fb',
+                    '00001801-0000-1000-8000-00805f9b34fb',
+                    '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+                    '00001801-0000-1000-8000-00805f9b34fb',
+                    '00002a00-0000-1000-8000-00805f9b34fb',
+                    '00002a01-0000-1000-8000-00805f9b34fb',
+                    '00002a04-0000-1000-8000-00805f9b34fb'
+                ]}).then(device => {
+                    log('"' + device.name + '" bluetooth device selected.');
+                    deviceCache = device;
+
+                    deviceCache.addEventListener('gattserverdisconnected',
+                        handleDisconnection);
+
+                    return deviceCache;
+            });
+        }
+
+        function handleDisconnection(event) {
+            let device = event.target;
+
+            log('"' + device.name + '" bluetooth device disconnected, trying to reconnect...');
+
+            connectDeviceAndCacheCharacteristic(device);
+        }
+
+        let characteristicCache = null;
+
+        function connectDeviceAndCacheCharacteristic(device) {
+            if(device.gatt.connected && characteristicCache) {
+                return Promise.resolve(characteristicCache);
+            }
+
+            log('Connecting to GATT server...');
+
+            return device.gatt.connect()
+            .then(server => {
+                log('GATT server connected, getting service...');
+
+                return server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+            })
+            .then(service => {
+                log('Service found, getting characteristic...');
+
+                return service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+            })
+            .then(characteristic => {
+                log('Characteristic found.');
+                characteristicCache = characteristic;
+            })
+            .catch(error => log(error));
+        }
+
+        function startNotifications(characteristic) {
+            log('Starting notifications...');
+
+            return characteristic.startNotifications()
+            .then(() => {
+                log('Notifications started');
+            });
+        }
+
+        function disconnect() {
+            if (deviceCache) {
+                log('Disconnecting from "' + deviceCache.name + '" bluetooth device...');
+
+                deviceCache.removeEventListener('gattserverdisconnected', handleDisconnection);
+
+                if (deviceCache.gatt.connected) {
+                    deviceCache.gatt.disconnect();
+                    log('"' + deviceCache.name + '" bluetooth device disconnected.');
+                } else {
+                    log('"' + deviceCache.name + '" bluetooth device is already disconnected.');
+                }
+            }
+
+            characteristicCache = null;
+            deviceCache = null;
+        }
+
+        function send(data) {
+
+        }
+
+        function log(data, type = '') {
+            terminalContainer.insertAdjacentHTML('beforeend',
+                '<div' + (type ? ' class="' + type + '"' : '') + '>' + data + '</div>'
+            );
+        }
         
     </script>
 

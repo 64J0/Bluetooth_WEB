@@ -1,0 +1,13 @@
+Nome: Vib_UART
+Endereço: FE:B6:D5:D3:35:E6
+
+Informações do log do nRF Toolbox:
+
+Writing characteristic 6e400002-b5a3-f393-e0a9-e50e24dcca9e (WRITE REQUEST)
+gatt.writeCharacteristic(6e400002-b5a3-f393-e0a9-e50e24dcca9e)
+Data written to 6e400002-b5a3-f393-e0a9-e50e24dcca9e, value: (0x) 46-46-54-53-36
+"FFTS6" sent
+Notification received from 6e400003-b5a3-f393-e0a9-e50e24dcca9e, value: (0x) 46-46-54-20-31-30-32-34-20-72-65-71
+"FFT 1024 req" received
+Notification received from 6e400003-b5a3-f393-e0a9-e50e24dcca9e, value: (0x) 00-00-00-00-00-00-00-00-00-00-00-00
+

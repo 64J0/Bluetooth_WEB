@@ -14,13 +14,17 @@
 
         <h1 id="demo">Hello world Bluetooth!</h1>
 
-        <button id="myBtn">Clique aqui</button>
+        <button id="myBtn">Conectar</button>
+
+        <button id="myBtn2">Mostrar valor</button>
 
     </body>
 
     <script>
 
         let botao = document.getElementById('myBtn');
+        let botao2 = document.getElementById('myBtn2');
+        let variavel;
         
         function mostrar_dados(dispositivo) {
             console.log(dispositivo.name);
@@ -48,7 +52,8 @@
             ).then(server => {
                 return server.getPrimaryService('battery_service');
             }).then (service => {
-                return service.getCharacteristic('battery_level');
+                variavel = service.getCharacteristic('battery_level');
+                return variavel;
             }).then (characteristic => {
                 return characteristic.readValue();
             }).then (value => {
@@ -58,7 +63,20 @@
             });
 
         });
-        
+
+        botao2.addEventListener('click', function() {
+            variavel
+            .then (characteristic => {
+                return characteristic.readValue();
+            })
+            .then (value => {
+                console.log('Battery percentage is ' + value.getUint8(0));
+            })
+            .catch(error => {
+                console.log("Error encountered: " + error);
+            });;
+        });
+
     </script>
 
 </html>
