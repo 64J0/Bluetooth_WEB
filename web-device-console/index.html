@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='utf-8'>
+        <title>Web Device</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="A Web Command Line Interface via NUS (Nordic UART Service) using Web Bluetooth">
+
+        <link href="./css/style.css" rel="stylesheet" type='text/css'>
+    </head>
+
+    <body>
+        <div id="connection-panel">
+            <button id="clientConnectButton" type="button" class="btn btn-default" onclick="connectionToggle()">Connect</button>
+        </div>
+        <div id='terminal'>
+            <input type="text" id="data">
+            <button onclick="nusSendString()">Enviar</button>
+            <p id="resposta"></p>
+        </div>
+
+        <script src='./js/app.js'></script>
+
+    </body>
+</html>
