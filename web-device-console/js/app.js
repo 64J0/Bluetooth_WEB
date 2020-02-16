@@ -12,6 +12,10 @@ var txCharacteristic;
 
 var connected = false;
 
+let cont = 0,
+    xlabel = [],
+    ylabel = [];
+
 // Esta função inicia a conexão ou termina dependendo do estado atual
 function connectionToggle() {
     if (connected) {
@@ -121,10 +125,55 @@ function handleNotifications(event) {
     // Convert raw data bytes to character values and use these to 
     // construct a string.
     let str = "";
-    for (let i = 0; i < value.byteLength; i++) {
-        str += String.fromCharCode(value.getUint8(i));
+    let aux = 0,
+        hex2dec = 0,
+        primeiroByte,
+        segundoByte,
+        informacao;
+
+    console.log('value: ', value, '\n');
+
+    // Primeira string enviada indicando a função interna que está sendo executada
+    if (value.byteLength == 13) {
+
+        for (let i = 0; i < value.byteLength; i++) {
+            str += String.fromCharCode(value.getUint8(i));
+        }
+        console.log(str);
+
+    } else {
+        
+        // Outro valores passados pelo sensor
+        for (let i = 0; i < value.byteLength; i++) {
+
+            if (!(i % 2)) {
+                primeiroByte = value.getUint8(i);
+                console.log('primeiro byte: ', primeiroByte);
+            } else {
+                segundoByte = value.getUint8(i);
+                informacao = String(segundoByte) + String(primeiroByte);
+                hex2dec = parseInt(informacao, 16);
+                console.log('segundo byte: ', segundoByte);
+                console.log('valores concatenados:', informacao);
+                console.log('valor inteiro:', hex2dec);
+                console.log('===================================================');
+                xlabel.push(cont);
+                ylabel.push(hex2dec);
+                cont++;
+            }
+
+            if (xlabel.length > 1023) {
+                //plotGraphics(xlabel, ylabel);
+                // Salvar no banco de dados e resetar as variáveis
+                xlabel.length = 0;
+                ylabel.length = 0;
+                cont = 0;
+            }
+    
+        }
+
     }
-    console.log('notification: ' + str + '\n');
+    
 }
 
 function nusSendString() {
@@ -151,4 +200,31 @@ function sendNextChunk(a) {
               sendNextChunk(a.slice(MTU));
           }
       });
+}
+
+
+
+
+
+function plotGraphics(xlabel, ylabel) {
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: xlabel,
+            datasets: [{
+                label: '# of Votes',
+                data: ylabel
+            }]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
 }

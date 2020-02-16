@@ -1,9 +1,8 @@
-
 html {
   height: 100%;
 }
+
 body {
-  position: absolute;
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -11,12 +10,17 @@ body {
   padding: 0px;
   background: #101010;
 }
+
 #terminal {
   display: block;
   position: fixed;
   top: 80px;
   bottom: 5%;
   width: 100%;
+}
+
+#terminal canvas {
+  background-color: rgb(255, 255, 255);
 }
 
 #connection-panel {
