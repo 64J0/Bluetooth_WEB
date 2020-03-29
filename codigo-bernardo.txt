@@ -1,3 +1,5 @@
+byte[] bytes => é uma instrução que tipa uma variável chamada bytes que é um vetor de uma variável byte.
+
 private static String bytesToString(byte[] bytes) {
         char[] hexChars = new char[0];
         if (bytes != null) {

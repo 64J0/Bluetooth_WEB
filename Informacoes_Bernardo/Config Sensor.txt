@@ -1,0 +1,7 @@
+void load_acc_default_config()
+{
+	vcfg.acc.axis=KX_AXIS_Z;
+	vcfg.acc.odr=KX_ODR_3k2;
+	vcfg.acc.res=KX_RES_16b;//16bits
+	vcfg.acc.sen=KX_SEN_2G;//2g
+}

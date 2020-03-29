@@ -1,0 +1,13 @@
+Perguntas sobre o sensor da HEDRO.
+
+Como você sabe que algum pacote foi perdido na transmissão de dados com o sensor?
+
+Funcionamento do meu algoritmo:
+	O sensor envia as informações quando o comando FFTS6 é executado.
+	Primeiramente verifica-se o tamanho da mensagem enviada, no caso, através de testes foi verificado que quando a mensagem contém um tamanho de 13 bytes então essa mensagem é o sensor informando o programa que está sendo executado, por exemplo, FFT 1024 req.
+	Sabendo que essa mensagem tem esse tamanho, o que o algorimo faz inicialmente é percorrer essa mensagem, capturando cada byte (8 bits) e transformando esse conteúdo em um inteiro, para a partir deste inteiro usar o padrão UTF-16 para achar o char correspondente ao código do número inteiro. Esses chars são enfileirados para gerar uma string que é mostrada para o usuário.
+	Caso o tamanho da mensagem seja diferente de 13, será executada outra rotina do algoritmo. Conforme os testes apontaram, cada mensagem é recebida no navegador com 20 bytes, menos a última, que pode ter seu valor alterado com base no algoritmo chamado, por exemplo FFTS5, FFTS4, etc. Neste caso são separados os bytes de índice ímpar dos bytes de índice par. 
+	Como os dados sempre começam no índice 0, então os bytes de índice par, pela lógica de alterar a ordem dos bytes serão sempre o final das strings do valor verdadeiro. É recuperado o primeiro valor como um inteiro sem sinal de 8 bits e salvo em uma variável temporária. Em seguida passa-se para o próximo byte da mensagem, que também é salvo em uma variável temporária, como um inteiro sem sinal de 8 bits. Em seguida faz-se uma transformação dos tipos destas variáveis temporárias para tornarem-se strings, e a partir destas strings é corrigida a ordem dos bytes, através da concatenação do segundoByte e o primeiroByte, nesta ordem.
+	Então, o valor obtido desta concatenação é considerado um valor hexadecimal, sendo portanto transformado novamente para um valor inteiro, que pode ser mostrado para o usuário do sistema.
+
+Link do funcionamento: https://www.youtube.com/watch?v=KAMu0SMchws

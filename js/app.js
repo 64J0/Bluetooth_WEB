@@ -1,22 +1,66 @@
 const bleNusServiceUUID  = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const bleNusCharRXUUID   = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 const bleNusCharTXUUID   = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
-// Não sei o que é isso ainda
 const MTU = 20;
 
-var bleDevice;
-var bleServer;
-var nusService;
-var rxCharacteristic;
-var txCharacteristic;
-
-var connected = false;
-
-let cont = 0,
+// Inicialização de variáveis globais:
+let bleDevice,
+    bleServer,
+    nusService,
+    rxCharacteristic,
+    txCharacteristic,
+    connected = false,
+    calc = 0,
+    myChart,
+    valorMaximo = 0,
+    cont = 0,
     xlabel = [],
-    ylabel = [];
+    ylabel = [],
+    G = 9.81,
+    RES_TO_CALC = 32768,
+    SENSIBILIDADE = 2,
+    FREQ = 3200,
+    N_SAMP = 1024;
 
-// Esta função inicia a conexão ou termina dependendo do estado atual
+
+// setValueOfN_SAMP()
+//
+// Essa função é responsável por definir o valor da variável N_SAMP com base no valor
+// digitado pelo usuário no campo de input. Sua chamada está associada a um evento
+// onChange no elemento input.
+function setValueOfN_SAMP() {
+    let cmd_input = document.getElementById('data').value;
+    switch(cmd_input) {
+        case 'FFTS6':
+            N_SAMP = 2048;
+            break;
+        case 'FFTS5':
+            N_SAMP = 1024
+            break;
+        case 'FFTS4':
+            N_SAMP = 512;
+            break;
+        case 'FFTS3':
+            N_SAMP = 256;
+            break;
+        case 'FFTS2':
+            N_SAMP = 128;
+            break;
+        case 'FFTS1':
+            N_SAMP = 64;
+            break;
+        default:
+            N_SAMP = 64;
+            alert('Valor digitado é inválido!');
+            break;
+    }
+    console.log('N_SAMP: ' + N_SAMP);
+}
+
+
+// connectionToggle()
+//
+// Essa função inicia a conexão ou termina dependendo do estado atual da variável connected.
 function connectionToggle() {
     if (connected) {
         disconnect();
@@ -26,7 +70,10 @@ function connectionToggle() {
     document.getElementById('terminal').focus();
 }
 
-// Define se o botão irá conectar ou desconectar
+
+// setConnButtonState()
+//
+// Define o texto que será mostrado no botão Connect com base no estado da variável enabled.
 function setConnButtonState(enabled) {
     if (enabled) {
         document.getElementById("clientConnectButton").innerHTML = "Disconnect";
@@ -35,14 +82,17 @@ function setConnButtonState(enabled) {
     }
 }
 
+
+// connect()
+//
+// Essa função é responsável por fazer a conexão do navegador com o sensor através
+// do protocolo BLE.
 function connect() {
-    // Verifica a dispobilidade da função navigator.bluetooth
-    if (!navigator.bluetooth) {
+    if (!navigator.bluetooth) { // Verifica a dispobilidade da função navigator.bluetooth...
         console.log('WebBluetooth API is not available.\r\n' +
                     'Please make sure the Web Bluetooth flag is enabled.');
-        return;
+        return undefined;
     }
-
     console.log('Requesting Bluetooth Device...');
     navigator.bluetooth.requestDevice({
         //filters: [{services: []}]
@@ -99,6 +149,10 @@ function connect() {
     });
 }
 
+
+// disconnect()
+//
+// Essa função é responsável por desconectar o sensor.
 function disconnect() {
     if (!bleDevice) {
         console.log('No Bluetooth Device connected...');
@@ -115,67 +169,73 @@ function disconnect() {
     }
 }
 
+
+// onDisconnected()
+//
+// Essa função é responsável por atualizar os estados das variáveis que definem quando
+// o usuário está conectado ou não 
 function onDisconnected() {
     connected = false;
     setConnButtonState(false);
 }
 
+
+// handleNotification()
+//
+// Essa função lida com os pacotes que são enviados para o sensor e a resposta deste.
 function handleNotifications(event) {
     let value = event.target.value;
     // Convert raw data bytes to character values and use these to 
     // construct a string.
     let str = "";
-    let aux = 0,
-        hex2dec = 0,
+    let hex2dec = 0,
         primeiroByte,
         segundoByte,
         informacao;
 
-    console.log('value: ', value, '\n');
-
     // Primeira string enviada indicando a função interna que está sendo executada
     if (value.byteLength == 13) {
-
         for (let i = 0; i < value.byteLength; i++) {
             str += String.fromCharCode(value.getUint8(i));
         }
         console.log(str);
-
-    } else {
-        
+    } else {    
         // Outro valores passados pelo sensor
-        for (let i = 0; i < value.byteLength; i++) {
-
-            if (!(i % 2)) {
-                primeiroByte = value.getUint8(i);
-                console.log('primeiro byte: ', primeiroByte);
-            } else {
-                segundoByte = value.getUint8(i);
-                informacao = String(segundoByte) + String(primeiroByte);
-                hex2dec = parseInt(informacao, 16);
-                console.log('segundo byte: ', segundoByte);
-                console.log('valores concatenados:', informacao);
-                console.log('valor inteiro:', hex2dec);
-                console.log('===================================================');
-                xlabel.push(cont);
-                ylabel.push(hex2dec);
-                cont++;
+        console.log('value', value)
+        if (ylabel.length <= (N_SAMP * 0.5)) { 
+            for (let i = 0; i < (value.byteLength * 0.5); i++) {
+                if (!(i % 2)) {
+                    primeiroByte = value.getUint8(i).toString(16);
+                } else {
+                    segundoByte = value.getUint8(i).toString(16);
+                    informacao = String(segundoByte) + String(primeiroByte);
+                    hex2dec = parseInt(informacao, 16);
+                    calc = parseFFTtoms2(hex2dec);
+                    if (calc > valorMaximo) {
+                        valorMaximo = calc;
+                    }
+                    ylabel.push(calc.toFixed(2));
+                }
             }
-
-            if (xlabel.length > 1023) {
-                //plotGraphics(xlabel, ylabel);
-                // Salvar no banco de dados e resetar as variáveis
-                xlabel.length = 0;
-                ylabel.length = 0;
-                cont = 0;
-            }
-    
         }
-
     }
-    
+
+    if (ylabel.length >= (N_SAMP * 0.5)) {
+        console.log('valorMaximo', valorMaximo);
+        for (var aux = 0; aux < (N_SAMP * 0.5); aux++) {
+            xlabel.push((aux*(FREQ/N_SAMP)).toFixed(2));
+        }
+        if(myChart) myChart.destroy();
+        console.log('xlabel', xlabel, 'ylabel', ylabel)
+        plotGraphics(xlabel, ylabel);
+    }
 }
 
+
+// nusSendString()
+//
+// Essa função é responsável por enviar o conteúdo do elemento input para o sensor
+// através do protocolo Nordic Uart.
 function nusSendString() {
     let data = document.getElementById('data').value;
     console.log(data);
@@ -192,6 +252,10 @@ function nusSendString() {
     }
 }
 
+
+// sendNextChunk()
+//
+// Envia o próximo pedaço da mensagem.
 function sendNextChunk(a) {
     let chunk = a.slice(0, MTU);
     rxCharacteristic.writeValue(chunk)
@@ -203,28 +267,36 @@ function sendNextChunk(a) {
 }
 
 
+// parseFFTtoms2()
+//
+// Essa função é responsável por executar o cálculo que pega um valor do sensor
+// no domínio da FFT e transforma em m/s^2.
+function parseFFTtoms2(value) {
+    return (value * G * SENSIBILIDADE / RES_TO_CALC);
+}
 
 
-
+// plotGraphics()
+//
+// Essa função é responsável por plotar o gráfico do resultado da medição do sensor,
+// usando o ChartJS.
 function plotGraphics(xlabel, ylabel) {
     var ctx = document.getElementById('myChart').getContext('2d');
-    var myChart = new Chart(ctx, {
-        type: 'bar',
+    myChart = new Chart(ctx, {
+        type: 'line',
         data: {
             labels: xlabel,
             datasets: [{
-                label: '# of Votes',
+                label: 'aceleration',
                 data: ylabel
             }]
         },
         options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
         }
     });
+    /*
+    xlabel.length = 0;
+    ylabel.length = 0;
+    cont = 0;
+    */
 }
