@@ -1,50 +1,82 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-    <head>
-        <meta charset="utf-8">
-        <title>BLE WEB</title>
-        <meta name="author" content="Vinícius Gajo Marques Oliveira">
-        <meta name="description" content="A Web Command Line Interface via NUS (Nordic UART Service) using Web Bluetooth">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <head>
+    <meta charset="utf-8" />
+    <title>BLE WEB</title>
+    <meta name="author" content="Vinícius Gajo Marques Oliveira" />
+    <meta
+      name="description"
+      content="Uma interface web para utilização do sensor da HEDRO visando medir a aceleração em um determinado ponto de uma estrutura"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
 
-        <!-- ícone -->
-        <link rel="shortcut icon" type="image/x-icon" href="./assets/bluetooth-logo.png" />
-        <link href="./css/style.css" rel="stylesheet" type="text/css">
+    <!-- ícone -->
+    <link
+      rel="shortcut icon"
+      type="image/x-icon"
+      href="./assets/bluetooth-logo.png"
+    />
+    <link href="./css/style.css" rel="stylesheet" type="text/css" />
 
-        <!-- ChartJS -> lib pra plotar gráficos -->
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
-    </head>
+    <!-- ChartJS -> lib pra plotar gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+  </head>
 
-    <body>
-        <div class="estilizada">
-            <div id="connection-panel">
-                <button id="clientConnectButton" type="button" onclick="connectionToggle()">
-                    Connect
-                </button>
-                <div class="img-bt">
-                    <img src="./assets/settings_bluetooth-24px.svg" alt="Bluetooth logo image svg.">
-                </div>
-            </div>
-
-            <div id="terminal">
-                <div class="flex-container">
-                    <input 
-                        type="text" 
-                        id="data" 
-                        value="FFTS5" 
-                        onchange="setValueOfN_SAMP()" 
-                        autofocus />
-                    <button onclick="nusSendString()" id="btn-enviar">Enviar</button>
-                </div>
-                <h3 id="resposta">Canvas</h3>
-                <canvas id="myChart" width="400" height="400" style="display: block;"></canvas>
-            </div>
+  <body>
+    <main class="estilizada">
+      <div id="connection-panel">
+        <button
+          id="clientConnectButton"
+          type="button"
+          onclick="connectionToggle()"
+        >
+          Conectar
+        </button>
+        <div class="img-bt">
+          <img
+            src="./assets/settings_bluetooth-24px.svg"
+            alt="Bluetooth logo image svg."
+          />
         </div>
+      </div>
 
-        <footer>
-            <p><strong><i>TCC</i>, <a href="" style="text-decoration: none">Código</a>, 2020.</strong></p>
-        </footer>
-        <script src="./js/teste.js"></script>
-    </body>
+      <div id="terminal">
+        <div class="flex-container">
+          <input
+            type="text"
+            id="data"
+            value="FFTS5"
+            onchange="setValueOfN_SAMP()"
+            autofocus
+          />
+          <button onclick="nusSendString()" id="btn-enviar">Enviar</button>
+        </div>
+        <h3 id="resposta">Canvas</h3>
+        <div class="canvas">
+          <canvas
+            width="200"
+            height="100"
+            id="myChart"
+            style="display: block;"
+            aria-label="Gráfico com medições"
+            role="img"
+          >
+            <p>Habilite o JavaScript.</p>
+          </canvas>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>
+        <strong
+          ><a href="https://github.com/64J0/Bluetooth_WEB">Código no GitHub</a>
+        </strong>
+      </p>
+    </footer>
+
+    <!-- Script JS -->
+    <script src="./js/teste.js"></script>
+  </body>
 </html>

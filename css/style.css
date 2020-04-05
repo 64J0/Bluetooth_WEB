@@ -11,27 +11,30 @@ body {
   display: grid;
   justify-content: center;
   margin: 10px;
-  padding: 40px;
-  font-size: 16px;
+  padding: 10px 0;
+  font-size: 18px;
 }
 
 button {
   cursor: pointer;
 }
 
+a {
+  text-decoration: none;
+}
 
 /*================================
   ESTILIZADA
 ================================*/
-div.estilizada {  
-  width: 500px;
+.estilizada {
+  width: 75%;
+  min-width: 600px;
   padding: 50px;
   border-right: 5px solid #aaa;
   border-bottom: 5px solid #aaa;
   border-radius: 20px;
   background-color: #fff;
 }
-
 
 /*================================
   CONNECTION-PANEL
@@ -44,7 +47,7 @@ div#connection-panel {
 }
 
 div#connection-panel button#clientConnectButton {
-  background-color: rgb(51,105,232);
+  background-color: rgb(51, 105, 232);
   border: none;
   border-radius: 8px;
   width: 120px;
@@ -71,16 +74,14 @@ div#connection-panel div.img-bt img {
   height: 100%;
 }
 
-
 /*================================
   TERMINAL
 ================================*/
-div#terminal canvas {
+div#terminal div.canvas canvas {
   border: 1px solid #777;
   border-radius: 8px;
   background-color: rgb(255, 255, 255);
 }
-
 
 /*================================
   FLEX-CONTAINER
@@ -114,7 +115,6 @@ div.flex-container button#btn-enviar {
   border-radius: 3px;
 }
 
-
 /*================================
   FOOTER
 ================================*/
@@ -122,5 +122,13 @@ footer {
   margin-top: 10px;
   text-align: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 18px;
+}
+
+footer a {
+  color: #666;
+}
+
+footer a:visited {
+  color: #666;
 }
