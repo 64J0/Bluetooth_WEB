@@ -50,7 +50,7 @@ function setValueOfN_SAMP() {
       break;
     default:
       N_SAMP = 64;
-      alert("Valor digitado é inválido!");
+      //alert("Valor digitado é inválido!");
       break;
   }
   console.log("N_SAMP: " + N_SAMP);
@@ -186,7 +186,10 @@ function handleNotifications(event) {
   let value = event.target.value;
   // Convert raw data bytes to character values and use these to
   // construct a string.
-  let str = "";
+  let str = "",
+    str_hex = "",
+    str_dec = "";
+  let vec = [];
   let hex2dec = 0,
     primeiroByte,
     segundoByte,
@@ -200,7 +203,17 @@ function handleNotifications(event) {
     console.log(str);
   } else {
     // Outro valores passados pelo sensor
-    console.log("value", value.buffer);
+    for (let i = 0; i < value.byteLength; i++) {
+      if (value.getUint8(i).toString(16).length < 2) {
+        str_hex += "0" + value.getUint8(i).toString(16);
+      } else {
+        str_hex += value.getUint8(i).toString(16);
+      }
+      str_dec += value.getUint8(i);
+    }
+    console.log(value);
+    console.log("hex: ", str_hex);
+    console.log("dec: ", str_dec);
     /*
         if (ylabel.length <= (N_SAMP * 0.5)) { 
             for (let i = 0; i < (value.byteLength * 0.5); i++) {
