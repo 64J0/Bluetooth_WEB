@@ -210,8 +210,10 @@ function handleNotifications(event) {
         str_hex += value.getUint8(i).toString(16);
       }
       str_dec += value.getUint8(i);
+      str += String.fromCharCode(value.getUint8(i));
     }
     console.log(value);
+    console.log("str: ", str_hex);
     console.log("hex: ", str_hex);
     console.log("dec: ", str_dec);
     /*
