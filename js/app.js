@@ -213,7 +213,7 @@ function handleNotifications(event) {
       str += String.fromCharCode(value.getUint8(i));
     }
     console.log(value);
-    console.log("str: ", str_hex);
+    console.log("str: ", str);
     console.log("hex: ", str_hex);
     console.log("dec: ", str_dec);
     /*
