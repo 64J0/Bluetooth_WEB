@@ -32,7 +32,7 @@ let x = [],
   byte1 = null,
   byte2 = null,
   byteCerto = [],
-  resultado,
+  resultado = 0,
   myChart;
 
 function calcAceleracao() {

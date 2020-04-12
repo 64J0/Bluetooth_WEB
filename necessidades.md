@@ -4,6 +4,7 @@
 - Ajustar o tamanho inicial do canvas
 - Estudar as possibilidades de melhoria da UI a partir das dicas do artigo do medium
 - Funcionalidade de mostrar quais foram os maiores valores medidos
+- Corrigir o gráfico quando pede-se pra mostrar mais dados
 
 # Finalizados
 

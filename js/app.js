@@ -1,26 +1,38 @@
+"use strict";
+
+// Valores característicos do serviço BLE -> Constantes
 const bleNusServiceUUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
 const bleNusCharRXUUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 const bleNusCharTXUUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 const MTU = 20;
 
-// Inicialização de variáveis globais:
+// Variáveis Globais:
+// Variáveis do sensor/API do google
 let bleDevice,
   bleServer,
   nusService,
   rxCharacteristic,
   txCharacteristic,
-  connected = false,
-  calc = 0,
-  myChart,
-  valorMaximo = 0,
-  cont = 0,
-  xlabel = [],
-  ylabel = [],
-  G = 9.81,
-  RES_TO_CALC = 32768,
+  connected = false;
+
+// Variável resultado da medição do sensor;
+let stringHexadecimal;
+
+// Variáveis a serem plotadas
+let x = [],
+  y = [],
+  byte1 = null,
+  byte2 = null,
+  byteCerto = [],
+  resultado = 0,
+  myChart = null;
+
+// Variáveis dos cálculos
+let G = 9.81,
+  CNT_RESOLUCAO = 32768,
   SENSIBILIDADE = 2,
   FREQ = 3200,
-  N_SAMP = 1024;
+  N_SAMP;
 
 // setValueOfN_SAMP()
 //
@@ -31,29 +43,30 @@ function setValueOfN_SAMP() {
   let cmd_input = document.getElementById("data").value;
   switch (cmd_input) {
     case "FFTS6":
-      N_SAMP = 2048;
+      N_SAMP = 2048 * 0.5;
       break;
     case "FFTS5":
-      N_SAMP = 1024;
+      N_SAMP = 1024 * 0.5;
       break;
     case "FFTS4":
-      N_SAMP = 512;
+      N_SAMP = 512 * 0.5;
       break;
     case "FFTS3":
-      N_SAMP = 256;
+      N_SAMP = 256 * 0.5;
       break;
     case "FFTS2":
-      N_SAMP = 128;
+      N_SAMP = 128 * 0.5;
       break;
     case "FFTS1":
-      N_SAMP = 64;
+      N_SAMP = 64 * 0.5;
       break;
     default:
-      N_SAMP = 64;
-      //alert("Valor digitado é inválido!");
+      N_SAMP = 64 * 0.5;
+      alert("Valor digitado é inválido!");
       break;
   }
-  console.log("N_SAMP: " + N_SAMP);
+  stringHexadecimal = "";
+  console.log("Número de samples: " + N_SAMP);
 }
 
 // connectionToggle()
@@ -70,12 +83,12 @@ function connectionToggle() {
 
 // setConnButtonState()
 //
-// Define o texto que será mostrado no botão Connect com base no estado da variável enabled.
+// Define o texto que será mostrado no botão Connect com base no estado do parâmetro enabled.
 function setConnButtonState(enabled) {
   if (enabled) {
-    document.getElementById("clientConnectButton").innerHTML = "Disconnect";
+    document.getElementById("clientConnectButton").innerHTML = "Desconectar";
   } else {
-    document.getElementById("clientConnectButton").innerHTML = "Connect";
+    document.getElementById("clientConnectButton").innerHTML = "Conectar";
   }
 }
 
@@ -84,18 +97,19 @@ function setConnButtonState(enabled) {
 // Essa função é responsável por fazer a conexão do navegador com o sensor através
 // do protocolo BLE.
 function connect() {
+  // Verifica a dispobilidade da função navigator.bluetooth...
   if (!navigator.bluetooth) {
-    // Verifica a dispobilidade da função navigator.bluetooth...
     console.log(
       "WebBluetooth API is not available.\r\n" +
         "Please make sure the Web Bluetooth flag is enabled."
     );
-    return undefined;
+    return null;
   }
   console.log("Requesting Bluetooth Device...");
   navigator.bluetooth
     .requestDevice({
-      //filters: [{services: []}]
+      // Sem filtros!
+      // filters: [{services: []}]
       optionalServices: [bleNusServiceUUID],
       acceptAllDevices: true,
     })
@@ -157,7 +171,7 @@ function connect() {
 function disconnect() {
   if (!bleDevice) {
     console.log("No Bluetooth Device connected...");
-    return;
+    return null;
   }
   console.log("Disconnecting from Bluetooth Device...");
   if (bleDevice.gatt.connected) {
@@ -184,69 +198,70 @@ function onDisconnected() {
 // Essa função lida com os pacotes que são enviados para o sensor e a resposta deste.
 function handleNotifications(event) {
   let value = event.target.value;
-  // Convert raw data bytes to character values and use these to
-  // construct a string.
   let str = "",
-    str_hex = "",
-    str_dec = "";
-  let vec = [];
-  let hex2dec = 0,
-    primeiroByte,
-    segundoByte,
-    informacao;
+    str_hex = "";
 
-  // Primeira string enviada indicando a função interna que está sendo executada
-  if (value.byteLength == 13) {
+  // Primeira string enviada pelo sensor indica qual função será executada
+  // internamente, e tem um comprimento de 13 bytes. Nesse caso, a será
+  // mostrado no console do navegador esses dados.
+  str =
+    String.fromCharCode(value.getUint8(0)) +
+    String.fromCharCode(value.getUint8(1)) +
+    String.fromCharCode(value.getUint8(2));
+  if (str === "FFT") {
+    str = "";
     for (let i = 0; i < value.byteLength; i++) {
       str += String.fromCharCode(value.getUint8(i));
     }
     console.log(str);
   } else {
-    // Outro valores passados pelo sensor
-    for (let i = 0; i < value.byteLength; i++) {
-      if (value.getUint8(i).toString(16).length < 2) {
-        str_hex += "0" + value.getUint8(i).toString(16);
-      } else {
-        str_hex += value.getUint8(i).toString(16);
+    // Armazenar o comprimento de um vetor em uma variável na instrução for
+    // otimiza essa instrução.
+    // Os outros pacotes vem sempre em um conjunto de 20 bytes, menos o último
+    // que terá o tamanho conforme a necessidade
+    for (let i = 0, len = value.byteLength; i < len; i++) {
+      str_hex = value.getUint8(i).toString(16);
+      // Verifica o tamanho do valor hexadecimal.
+      if (str_hex.length < 2) {
+        str_hex = "0" + str_hex;
       }
-      str_dec += value.getUint8(i);
-      str += String.fromCharCode(value.getUint8(i));
+      stringHexadecimal += str_hex;
+      if (stringHexadecimal.length === N_SAMP * 8) {
+        console.log(stringHexadecimal.length);
+        hexToDec(stringHexadecimal);
+        stringHexadecimal = "";
+      }
     }
-    console.log(value);
-    console.log("str: ", str);
-    console.log("hex: ", str_hex);
-    console.log("dec: ", str_dec);
-    /*
-        if (ylabel.length <= (N_SAMP * 0.5)) { 
-            for (let i = 0; i < (value.byteLength * 0.5); i++) {
-                if (!(i % 2)) {
-                    primeiroByte = value.getUint8(i).toString(16);
-                } else {
-                    segundoByte = value.getUint8(i).toString(16);
-                    informacao = String(segundoByte) + String(primeiroByte);
-                    hex2dec = parseInt(informacao, 16);
-                    calc = parseFFTtoms2(hex2dec);
-                    if (calc > valorMaximo) {
-                        valorMaximo = calc;
-                    }
-                    ylabel.push(calc.toFixed(2));
-                }
-            }
-        }
-        */
+  }
+}
+
+// hexToDex()
+//
+// Essa função é utilizada para transformar os valores hexadecimais em valores
+// decimais em m/s^2
+function hexToDec(payload) {
+  x = [];
+  y = [];
+  byteCerto = [];
+  // Ajusta a ordem dos valores enviados pelo sensor
+  for (let cont = 0, len = payload.length; cont < len; cont += 4) {
+    byte2 = String(payload[cont]) + String(payload[cont + 1]);
+    byte1 = String(payload[cont + 2]) + String(payload[cont + 3]);
+    byteCerto.push(String(byte1) + String(byte2));
+    byte1 = null;
+    byte2 = null;
   }
 
-  /*
-  if (ylabel.length >= N_SAMP * 0.5) {
-    console.log("valorMaximo", valorMaximo);
-    for (var aux = 0; aux < N_SAMP * 0.5; aux++) {
-      xlabel.push((aux * (FREQ / N_SAMP)).toFixed(2));
-    }
-    if (myChart) myChart.destroy();
-    console.log("xlabel", xlabel, "ylabel", ylabel);
-    plotGraphics(xlabel, ylabel);
+  // Faz os cálculos com os valores certos dos bytes
+  for (let cont = 0, len = byteCerto.length * 0.5; cont < len; cont++) {
+    resultado =
+      parseInt(byteCerto[cont], 16) * G * (SENSIBILIDADE / CNT_RESOLUCAO);
+    y.push(resultado.toFixed(4));
+    // Arredonda os valores em X para duas casas decimais.
+    x.push((cont * (FREQ / N_SAMP)).toFixed(2));
   }
-  */
+
+  plotData(x, y);
 }
 
 // nusSendString()
@@ -281,36 +296,69 @@ function sendNextChunk(a) {
   });
 }
 
-// parseFFTtoms2()
-//
-// Essa função é responsável por executar o cálculo que pega um valor do sensor
-// no domínio da FFT e transforma em m/s^2.
-function parseFFTtoms2(value) {
-  return (value * G * SENSIBILIDADE) / RES_TO_CALC;
-}
-
-// plotGraphics()
+// plotData()
 //
 // Essa função é responsável por plotar o gráfico do resultado da medição do sensor,
 // usando o ChartJS.
-function plotGraphics(xlabel, ylabel) {
+function plotData(x, y) {
   var ctx = document.getElementById("myChart").getContext("2d");
+  if (myChart) {
+    myChart.destroy();
+  }
   myChart = new Chart(ctx, {
+    // O tipo do gráfico que será criado
     type: "line",
+
+    // Os dados do nosso conjunto (dataset)
     data: {
-      labels: xlabel,
+      // Eixo X
+      labels: x,
+      // Valores do eixo Y (pode ser mais que um, por isso o array)
       datasets: [
         {
-          label: "aceleration",
-          data: ylabel,
+          label: "m/(s²)",
+          backgroundColor: "rgba(28, 167, 45, 0.8)",
+          data: y,
+          fill: true,
         },
       ],
     },
-    options: {},
+
+    // Outras opções
+    options: {
+      /* O balão que abre pra informar as coordenadas do ponto no 
+      gráfico quando o usuário chega o mouse muito perto de algum 
+      desses pontos. Neste caso foi configurado para mostrar apenas 
+      uma informação, levando em consideração apenas o ponto mais 
+      próximo do cursor do usuário. */
+      tooltips: {
+        mode: "nearest",
+      },
+      // Legenda dos valores em Y
+      legend: {
+        position: "top",
+        labels: {
+          fontSize: 14,
+        },
+      },
+      scales: {
+        xAxes: [
+          {
+            display: true,
+            scaleLabel: {
+              display: true,
+              labelString: "Frequência em Hz",
+              fontSize: 14,
+            },
+          },
+        ],
+      },
+      // Título do canvas
+      title: {
+        display: true,
+        text: "Aceleração",
+        fontSize: 18,
+      },
+    },
   });
-  /*
-    xlabel.length = 0;
-    ylabel.length = 0;
-    cont = 0;
-    */
 }
