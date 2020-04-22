@@ -30,8 +30,7 @@ a {
   width: 75%;
   min-width: 600px;
   padding: 50px;
-  border-right: 5px solid #aaa;
-  border-bottom: 5px solid #aaa;
+  box-shadow: 5px 5px 5px #aaa;
   border-radius: 20px;
   background-color: #fff;
 }
@@ -55,7 +54,6 @@ div#connection-panel button#clientConnectButton {
   color: white;
   text-align: center;
   text-decoration: none;
-  font-weight: 550;
   font-size: 16px;
   cursor: pointer;
   align-items: center;

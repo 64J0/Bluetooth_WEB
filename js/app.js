@@ -214,6 +214,7 @@ function handleNotifications(event) {
       str += String.fromCharCode(value.getUint8(i));
     }
     console.log(str);
+    showToastify(str);
   } else {
     // Armazenar o comprimento de um vetor em uma variável na instrução for
     // otimiza essa instrução.
@@ -303,6 +304,7 @@ function sendNextChunk(a) {
 function plotData(x, y) {
   var ctx = document.getElementById("myChart").getContext("2d");
   if (myChart) {
+    // console.log("x.length: " + x.length, "y.length: " + y.length);
     myChart.destroy();
   }
   myChart = new Chart(ctx, {
@@ -361,4 +363,23 @@ function plotData(x, y) {
       },
     },
   });
+}
+
+// showToastify()
+//
+// Essa função é responsável por mostrar o toast na parte superior
+// da tela do cliente
+function showToastify(text) {
+  Toastify({
+    text: text,
+    duration: 3000,
+    //destination: "https://github.com/apvarun/toastify-js",
+    newWindow: true,
+    close: true,
+    gravity: "top", // `top` or `bottom`
+    position: "left", // `left`, `center` or `right`
+    backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+    stopOnFocus: true, // Prevents dismissing of toast on hover
+    onClick: function () {}, // Callback after click
+  }).showToast();
 }
