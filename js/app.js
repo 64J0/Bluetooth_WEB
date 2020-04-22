@@ -66,7 +66,7 @@ function setValueOfN_SAMP() {
       break;
   }
   stringHexadecimal = "";
-  console.log("Número de samples: " + N_SAMP);
+  showToastify(`Número de samples: ${N_SAMP}`);
 }
 
 // connectionToggle()
@@ -255,11 +255,13 @@ function hexToDec(payload) {
 
   // Faz os cálculos com os valores certos dos bytes
   for (let cont = 0, len = byteCerto.length * 0.5; cont < len; cont++) {
-    resultado =
-      parseInt(byteCerto[cont], 16) * G * (SENSIBILIDADE / CNT_RESOLUCAO);
-    y.push(resultado.toFixed(4));
-    // Arredonda os valores em X para duas casas decimais.
-    x.push((cont * (FREQ / N_SAMP)).toFixed(2));
+    if (cont * (FREQ / N_SAMP) <= 400) {
+      resultado =
+        parseInt(byteCerto[cont], 16) * G * (SENSIBILIDADE / CNT_RESOLUCAO);
+      y.push(resultado.toFixed(2));
+      // Arredonda os valores em X para duas casas decimais.
+      x.push((cont * (FREQ / N_SAMP)).toFixed(2));
+    }
   }
 
   plotData(x, y);
@@ -271,7 +273,6 @@ function hexToDec(payload) {
 // através do protocolo Nordic Uart.
 function nusSendString() {
   let data = document.getElementById("data").value;
-  console.log(data);
   if (bleDevice && bleDevice.gatt.connected) {
     console.log("send: " + data);
     let val_arr = new Uint8Array(data.length);
@@ -377,7 +378,7 @@ function showToastify(text) {
     newWindow: true,
     close: true,
     gravity: "top", // `top` or `bottom`
-    position: "left", // `left`, `center` or `right`
+    position: "right", // `left`, `center` or `right`
     backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
     stopOnFocus: true, // Prevents dismissing of toast on hover
     onClick: function () {}, // Callback after click
